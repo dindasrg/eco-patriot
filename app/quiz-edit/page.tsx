@@ -8,7 +8,7 @@ import { useState } from 'react'
 
 export default function Page () {
     // dummt data
-    const number = generateNumber(10);
+    const number = generateNumber(5);
     const dummyData = [
         {
           question: "This is the editable text",
@@ -23,12 +23,35 @@ export default function Page () {
             { text: "Option A", isCorrect: true },
             { text: "Option B", isCorrect: false }
           ]
+        },
+        {
+            question: "This is yet another question",
+            options: [
+              { text: "Option A", isCorrect: true },
+              { text: "Option B", isCorrect: false }
+            ]
+          },
+        {
+        question: "This is come the sun another question",
+        options: [
+            { text: "Option A", isCorrect: true },
+            { text: "Option B", isCorrect: false }
+        ]
+        },
+        {
+        question: "This is hackkkk another question",
+        options: [
+            { text: "Option A", isCorrect: true },
+            { text: "Option B", isCorrect: false }
+        ]
         }
       ]
     
 
     const [selectedNumber, setSelectedNumber] = useState('1');
     const [data, setData] = useState(dummyData);
+    const [question, setQuestion] = useState(dummyData[0].question)
+    const [option, setOption] = useState(dummyData[0].options)
 
     function generateNumber (number : number) {
         const result = [];
@@ -40,12 +63,15 @@ export default function Page () {
 
     const handleClickNumber = (number : string) => {
         setSelectedNumber(number);
+        setQuestion(data[parseInt(number)-1].question);
+        setOption(data[parseInt(number)-1].options)
     }
 
-    function handleEditQuestion (number : number, newQuestion : string) {
-        const updatedQuestion = [...dummyData];
-        updatedQuestion[number].question= newQuestion;
+    function handleEditQuestion (number : string, newQuestion : string) {
+        const updatedQuestion = [...data];
+        updatedQuestion[parseInt(number)-1].question= newQuestion;
         setData(updatedQuestion);
+        setQuestion(data[parseInt(number)-1].question);
     }
 
     return (
@@ -84,7 +110,9 @@ export default function Page () {
                 </div>
 
                 <div className='col-span-5'>
-                    <QuestionInput onChangeText={(newQuestion) => handleEditQuestion(0, newQuestion)} number='1' question={data[0].question}/>
+                    <QuestionInput onChangeText={(number, newQuestion) => handleEditQuestion(number, newQuestion)} number={selectedNumber} question={question}/>
+
+                    <Option char='A' text='badabom'/>
                 </div>
             </div>
         </div>
@@ -122,7 +150,7 @@ export function QuizNumber (props : QuizNumberProps) {
 interface QuestionInputProps {
     number : string;
     question: string;
-    onChangeText : (text: string) => void;
+    onChangeText : (number: string, text: string) => void;
 }
 
 export function QuestionInput (props : QuestionInputProps) {
@@ -131,7 +159,7 @@ export function QuestionInput (props : QuestionInputProps) {
     return (
         <div className='grid grid-flow-row space-y-5'>
             <h1>Soal {number}</h1>
-            <input onChange={(e) => {onChangeText(e.target.value)}} type='text' value={question}/>
+            <input className='border-primary border-[1px] py-4 px-3 rounded-[12px]' onChange={(e) => {onChangeText(number, e.target.value)}} type='text' value={question}/>
         </div>
     )
 }
@@ -146,5 +174,7 @@ interface OptionProps {
 export function Option (props : OptionProps) {
     const {char, text, isAnswer, isEdited} = props;
     
-    
+    return (
+        <Button variant='outline' onClick={()=>{}}><p>{text}</p></Button>
+    )
 }

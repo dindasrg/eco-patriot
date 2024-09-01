@@ -13,8 +13,9 @@ import IconBook from '@/app/ui/icons/IconBook'
 import IconArrowRight from '@/app/ui/icons/IconArrowRight'
 
 export default function Home() {
-  const [disabled, setDisabled] = useState(true);
   const [isModalVisible, setModalVisible] = useState(false);
+  const [questionSum, setQuestionSum] = useState("10");
+  const [topic, setTopic] = useState("");
 
   function handleClickGenerate() {
     setModalVisible(true)
@@ -23,6 +24,42 @@ export default function Home() {
   function handleModalClose() {
     setModalVisible(false)
   }
+
+  const handleChangeSum = (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQuestionSum(event.target.value);
+  };
+
+  const handleTopic = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setTopic(event.target.value);
+  }
+
+  const handleSubmit = async () => {
+
+    const data = {
+      topics: topic,
+      number_of_questions: questionSum,
+    };
+
+    try {
+      const response = await fetch('http://147.139.246.230/generate_questions', {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {
+          'Content-Type': 'application/json',
+
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        console.log('Data submitted successfully:', data);
+      } else {
+        console.error('Failed to submit data:', response.status);
+      }
+    } catch (error) {
+      console.error('Error occurred while submitting data:', error);
+    }
+  };
 
   return (
     <div className="mx-14 space-y-10 mb-[94px]">
@@ -62,7 +99,7 @@ export default function Home() {
           <QuizCard title="Permutasi dan Kombinasi" onCta={()=>{}} questionNum="10" responseNum="12"/>
         </div>
 
-        <TopicModal handleModalClose={handleModalClose} isVisible={isModalVisible} handleTopicInput={()=>{}} disabled={disabled} /> 
+        <TopicModal handleSubmit={handleSubmit} questionSum={questionSum} handleQuestionSum={handleChangeSum} handleModalClose={handleModalClose} isVisible={isModalVisible} handleTopicInput={handleTopic} disabled={topic==="" || questionSum==="custom"} /> 
       </div>
 
 
