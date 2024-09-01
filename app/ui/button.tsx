@@ -18,13 +18,13 @@ export function Button ({children, className, variant="primary", size="small", .
         <button 
             {...rest}
             className={clsx(
-            className,
             "rounded-[20px] font-semibold disabled:cursor-not-allowed",
             {"bg-primary text-grey disabled:bg-disable-100 disabled:text-disable-500" : variant === "primary"},
             {"bg-secondary text-grey" : variant === "secondary"},
             {"border-2 border-primary bg-white px-3 py-2" : variant === "outline"},
             {"px-[60px] py-2" : size === "medium"},
-            {"px-[20px] py-2" : size === "small"}
+            {"px-[20px] py-2" : size === "small"},
+            className
         )}>
             {children}
         </button>

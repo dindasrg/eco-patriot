@@ -3,55 +3,64 @@
 import { Button } from '@/app/ui/button'
 import IconLamp from '@/app/ui/icons/IconLamp'
 import IconTrash from '@/app/ui/icons/IconTrash'
+import IconGreenCheck from '@/app/ui/icons/IconGreenCheck'
+import IconGreyCheck from '@/app/ui/icons/IconGreyCheck'
+import { useRouter, useSearchParams  } from 'next/navigation';
+
 import clsx from 'clsx'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { parse } from 'path'
 
 export default function Page () {
     // dummt data
     const number = generateNumber(5);
-    const dummyData = [
-        {
-          question: "This is the editable text",
-          options: [
-            { text: "Option 1", isCorrect: true },
-            { text: "Option 2", isCorrect: false }
-          ]
-        },
-        {
-          question: "This is another question",
-          options: [
-            { text: "Option A", isCorrect: true },
-            { text: "Option B", isCorrect: false }
-          ]
-        },
-        {
-            question: "This is yet another question",
-            options: [
-              { text: "Option A", isCorrect: true },
-              { text: "Option B", isCorrect: false }
-            ]
-          },
-        {
-        question: "This is come the sun another question",
-        options: [
-            { text: "Option A", isCorrect: true },
-            { text: "Option B", isCorrect: false }
-        ]
-        },
-        {
-        question: "This is hackkkk another question",
-        options: [
-            { text: "Option A", isCorrect: true },
-            { text: "Option B", isCorrect: false }
-        ]
-        }
-      ]
-    
+    const optNum = generateNumber (4);
+    const chars = ['A', 'B', 'C', 'D']
 
+    const searchParams = useSearchParams();
+
+    const dataa = searchParams.get('data')
+    if (dataa){
+        console.log(JSON.parse(dataa).output[0].jawaban_tepat);
+    }
+
+    interface QuestionType {
+        pertanyaan : string;
+        opsi_jawaban : string[];
+        jawaban_tepat : string;
+        penjelasan : string
+    }
+
+    const [parsedData, setParsedData] = useState<QuestionType[]>([]);
     const [selectedNumber, setSelectedNumber] = useState('1');
-    const [data, setData] = useState(dummyData);
-    const [question, setQuestion] = useState(dummyData[0].question)
-    const [option, setOption] = useState(dummyData[0].options)
+    const [data, setData] = useState<QuestionType[]>([]);
+    const [question, setQuestion] = useState<string>('');
+   
+    useEffect(() => {
+        const getData = searchParams.get('data');
+        if (getData) {
+          try {
+            // Parse the JSON string into a JavaScript object
+            const parsed = JSON.parse(getData);
+            setParsedData(parsed.output)
+            console.log("parsed")
+            console.log(parsed.input)
+          } catch (error) {
+            console.error('Error parsing data:', error);
+          }
+        }
+      }, [searchParams]);
+
+    useEffect(() => {
+        if (parsedData) {
+        setData(parsedData);
+        setQuestion(parsedData[0].pertanyaan);
+        }
+    }, [parsedData]);
+
+    if (!data){
+        return null;
+    }
 
     function generateNumber (number : number) {
         const result = [];
@@ -63,15 +72,22 @@ export default function Page () {
 
     const handleClickNumber = (number : string) => {
         setSelectedNumber(number);
-        setQuestion(data[parseInt(number)-1].question);
-        setOption(data[parseInt(number)-1].options)
+        setQuestion(data[parseInt(number)-1].pertanyaan);
     }
 
     function handleEditQuestion (number : string, newQuestion : string) {
         const updatedQuestion = [...data];
-        updatedQuestion[parseInt(number)-1].question= newQuestion;
+        updatedQuestion[parseInt(number)-1].pertanyaan= newQuestion;
         setData(updatedQuestion);
-        setQuestion(data[parseInt(number)-1].question);
+        setQuestion(data[parseInt(number)-1].pertanyaan);
+    }
+
+    function onChangeAnswerText (questionNumber : string, index : number, e : React.ChangeEvent<HTMLInputElement>) {
+        const updatedAns = [...data][parseInt(questionNumber)-1].opsi_jawaban
+        updatedAns[index-1] = e.target.value;
+        const updatedData = [...data]
+        updatedData[parseInt(questionNumber)-1].opsi_jawaban = updatedAns;
+        setData(updatedData)
     }
 
     return (
@@ -96,7 +112,7 @@ export default function Page () {
                     </div>
                     <div className='grid grid-flow-row space-y-3'>
                         <Button onClick={()=>{}} variant='secondary' className='text-[14px]'>Tambah Soal</Button>
-                        <Button onClick={()=>{}} variant='secondary' size='small' className='bg-danger-600 text-[14px] px-10'>
+                        <Button onClick={()=>{}} variant='secondary' size='small' className='bg-danger text-[14px] px-10'>
                             <div className='grid grid-flow-col space-x-2 justify-center'>
                                 <IconTrash /> 
                                 <p>Hapus Soal</p>
@@ -109,10 +125,14 @@ export default function Page () {
                     </div>
                 </div>
 
-                <div className='col-span-5'>
+                <div className='col-span-5 grid-rows-subgrid space-y-10'>
                     <QuestionInput onChangeText={(number, newQuestion) => handleEditQuestion(number, newQuestion)} number={selectedNumber} question={question}/>
 
-                    <Option char='A' text='badabom'/>
+                    <div className='grid grid-flow-row space-y-3'>
+                        <p>Pilihan Ganda</p>
+                        {optNum.map((i) => <Option key={i} isAnswer={chars[parseInt(i)-1] === data[parseInt(selectedNumber)-1].jawaban_tepat} onChangeText={(questionNumber, index, e) => onChangeAnswerText(questionNumber, index, e)} questionNumer={selectedNumber} answerIndex={parseInt(i)} char={chars[parseInt(i)-1]} text={data[parseInt(selectedNumber)-1].opsi_jawaban[parseInt(i)-1]}/>)}
+                        
+                    </div>
                 </div>
             </div>
         </div>
@@ -159,7 +179,7 @@ export function QuestionInput (props : QuestionInputProps) {
     return (
         <div className='grid grid-flow-row space-y-5'>
             <h1>Soal {number}</h1>
-            <input className='border-primary border-[1px] py-4 px-3 rounded-[12px]' onChange={(e) => {onChangeText(number, e.target.value)}} type='text' value={question}/>
+            <input className='border-primary border-[1px] py-4 px-3 rounded-[12px] focus:outline-none' onChange={(e) => {onChangeText(number, e.target.value)}} type='text' value={question}/>
         </div>
     )
 }
@@ -169,12 +189,30 @@ interface OptionProps {
     text: string;
     isAnswer ? : boolean;
     isEdited ? : boolean;
+    onChangeText ? : (questionNumber : string, index: number, e: React.ChangeEvent<HTMLInputElement>) => void;
+    questionNumer : string;
+    answerIndex : number;
 }
 
 export function Option (props : OptionProps) {
-    const {char, text, isAnswer, isEdited} = props;
+    const {char, text, isAnswer, isEdited, onChangeText, questionNumer, answerIndex} = props;
+
+    if (!onChangeText){
+        return;
+    }
     
     return (
-        <Button variant='outline' onClick={()=>{}}><p>{text}</p></Button>
+        <Button className='rounded-[12px] border-[1px] px-4 py-3' variant='outline' onClick={()=>{}}>
+            <div className='grid grid-flow-col justify-between'>
+                <div className='flex space-x-3 items-center'>
+                    <QuizNumber number={char} isSelected onClick={()=>{}}/>
+                    <input type='text' className='border-0 focus:outline-none flex' value={text} onChange={(e) => onChangeText(questionNumer, answerIndex, e)}/>
+                </div>
+                <div className='rounded-full border-1 border-primary'>
+                    {isAnswer ? <IconGreenCheck/> : <IconGreyCheck/>}
+                </div>
+            </div>
+                     
+        </Button>
     )
 }

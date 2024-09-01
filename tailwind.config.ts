@@ -37,6 +37,7 @@ const config: Config = {
         500: "#858E96",
       },
       danger: {
+        DEFAULT: "#DC3545",
         500: "#FFDDD9",
         600: "#DC3545"
       }

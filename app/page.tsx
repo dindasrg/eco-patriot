@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { useRouter } from 'next/navigation';
 
 import { Button } from '@/app/ui/button'
 import QuizCard from "@/app/ui/QuizCard";
@@ -16,6 +17,8 @@ export default function Home() {
   const [isModalVisible, setModalVisible] = useState(false);
   const [questionSum, setQuestionSum] = useState("10");
   const [topic, setTopic] = useState("");
+
+  const router = useRouter();
 
   function handleClickGenerate() {
     setModalVisible(true)
@@ -43,7 +46,6 @@ export default function Home() {
     try {
       const response = await fetch('http://147.139.246.230/generate_questions', {
         method: 'POST',
-        mode: 'no-cors',
         headers: {
           'Content-Type': 'application/json',
 
@@ -52,7 +54,9 @@ export default function Home() {
       });
 
       if (response.ok) {
-        console.log('Data submitted successfully:', data);
+        const data = await response.json();
+        router.push(`/quiz-edit?data=${encodeURIComponent(JSON.stringify(data))}`);
+        
       } else {
         console.error('Failed to submit data:', response.status);
       }
