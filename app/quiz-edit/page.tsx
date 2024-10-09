@@ -12,55 +12,36 @@ import { useState, useEffect } from 'react'
 import { parse } from 'path'
 
 export default function Page () {
-    // dummt data
-    const number = generateNumber(5);
-    const optNum = generateNumber (4);
-    const chars = ['A', 'B', 'C', 'D']
+    const [data, setData] = useState<any[]>([])
+    const [isLoading, setLoading] = useState(true)
+
+    const [selectedNumber, setSelectedNumber] = useState('1');
+    const [question, setQuestion] = useState<string>('');
+    const [options, setOptions] = useState<string[]>([])
+    const [correctAns, setCorrectAns] = useState<string>('');
 
     const searchParams = useSearchParams();
-
-    const dataa = searchParams.get('data')
-    if (dataa){
-        console.log(JSON.parse(dataa).output[0].jawaban_tepat);
-    }
-
-    interface QuestionType {
-        pertanyaan : string;
-        opsi_jawaban : string[];
-        jawaban_tepat : string;
-        penjelasan : string
-    }
-
-    const [parsedData, setParsedData] = useState<QuestionType[]>([]);
-    const [selectedNumber, setSelectedNumber] = useState('1');
-    const [data, setData] = useState<QuestionType[]>([]);
-    const [question, setQuestion] = useState<string>('');
-   
-    useEffect(() => {
-        const getData = searchParams.get('data');
-        if (getData) {
-          try {
-            // Parse the JSON string into a JavaScript object
-            const parsed = JSON.parse(getData);
-            setParsedData(parsed.output)
-            console.log("parsed")
-            console.log(parsed.input)
-          } catch (error) {
-            console.error('Error parsing data:', error);
-          }
-        }
-      }, [searchParams]);
+    const amount = searchParams.get('amount')
 
     useEffect(() => {
-        if (parsedData) {
-        setData(parsedData);
-        setQuestion(parsedData[0].pertanyaan);
-        }
-    }, [parsedData]);
+        fetch(`https://opentdb.com/api.php?amount=${amount}&category=18&difficulty=easy&type=multiple`)
+          .then((res) => res.json())
+          .then((data) => {
+            setData(data.results)
+            setQuestion(data.results[0].question)
+            setOptions([...data.results[0].incorrect_answers, data.results[0].correct_answer])
+            setCorrectAns(data.results[0].correct_answer)
+            setLoading(false)
+          })
+    }, [amount])
 
-    if (!data){
-        return null;
-    }
+    if (isLoading) return <p>Loading...</p>
+    if (!data || !amount) return <p>No data</p>
+
+    // dummt data
+    const number = generateNumber(parseInt(amount) || 0);
+    const optNum = generateNumber (4);
+    const chars = ['A', 'B', 'C', 'D']
 
     function generateNumber (number : number) {
         const result = [];
@@ -72,14 +53,15 @@ export default function Page () {
 
     const handleClickNumber = (number : string) => {
         setSelectedNumber(number);
-        setQuestion(data[parseInt(number)-1].pertanyaan);
+        setQuestion(data[parseInt(number)-1].question);
+        setOptions([...data[parseInt(number)-1].incorrect_answers, data[parseInt(number)-1].correct_answer])
     }
 
     function handleEditQuestion (number : string, newQuestion : string) {
         const updatedQuestion = [...data];
-        updatedQuestion[parseInt(number)-1].pertanyaan= newQuestion;
+        updatedQuestion[parseInt(number)-1].question= newQuestion;
         setData(updatedQuestion);
-        setQuestion(data[parseInt(number)-1].pertanyaan);
+        setQuestion(data[parseInt(number)-1].question);
     }
 
     function onChangeAnswerText (questionNumber : string, index : number, e : React.ChangeEvent<HTMLInputElement>) {
@@ -130,7 +112,7 @@ export default function Page () {
 
                     <div className='grid grid-flow-row space-y-3'>
                         <p>Pilihan Ganda</p>
-                        {optNum.map((i) => <Option key={i} isAnswer={chars[parseInt(i)-1] === data[parseInt(selectedNumber)-1].jawaban_tepat} onChangeText={(questionNumber, index, e) => onChangeAnswerText(questionNumber, index, e)} questionNumer={selectedNumber} answerIndex={parseInt(i)} char={chars[parseInt(i)-1]} text={data[parseInt(selectedNumber)-1].opsi_jawaban[parseInt(i)-1]}/>)}
+                        {optNum.map((i) => <Option key={i} isAnswer={chars[parseInt(i)-1] === correctAns} onChangeText={(questionNumber, index, e) => onChangeAnswerText(questionNumber, index, e)} questionNumer={selectedNumber} answerIndex={parseInt(i)} char={chars[parseInt(i)-1]} text={options[parseInt(i)-1]}/>)}
                         
                     </div>
                 </div>
@@ -157,7 +139,7 @@ export function QuizNumber (props : QuizNumberProps) {
             <Button 
             className={clsx(
                 'rounded-[8px] font-bold text-[20px] text-primary px-[8px] py-[2px] w-[40px] whitespace-normal text-center',
-                {"bg-primary-500 text-white" : isSelected},
+                {"bg-primary-300 !important text-white" : isSelected},
             )} 
             variant='outline' 
             size='small'
@@ -205,7 +187,14 @@ export function Option (props : OptionProps) {
         <Button className='rounded-[12px] border-[1px] px-4 py-3' variant='outline' onClick={()=>{}}>
             <div className='grid grid-flow-col justify-between'>
                 <div className='flex space-x-3 items-center'>
-                    <QuizNumber number={char} isSelected onClick={()=>{}}/>
+                    <div 
+                        className={clsx(
+                            'rounded-[8px] font-bold text-[20px] text-primary px-[8px] py-[2px] w-[40px] whitespace-normal text-center border-2 border-primary',
+                            // {"bg-primary-500 text-white" : isSelected},
+                        )} 
+                    >
+                        {char}
+                    </div>
                     <input type='text' className='border-0 focus:outline-none flex' value={text} onChange={(e) => onChangeText(questionNumer, answerIndex, e)}/>
                 </div>
                 <div className='rounded-full border-1 border-primary'>

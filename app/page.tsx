@@ -43,26 +43,7 @@ export default function Home() {
       number_of_questions: questionSum,
     };
 
-    try {
-      const response = await fetch('http://147.139.246.230/generate_questions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        router.push(`/quiz-edit?data=${encodeURIComponent(JSON.stringify(data))}`);
-        
-      } else {
-        console.error('Failed to submit data:', response.status);
-      }
-    } catch (error) {
-      console.error('Error occurred while submitting data:', error);
-    }
+    router.push(`quiz-edit?amount=${data.number_of_questions}&topic=18`)
   };
 
   return (
